@@ -1,10 +1,11 @@
 {
     "name": "bitsmind/graphsql",
     "description": "GraphSql is a Graphql like syntactical method to read data from SQL databases with an ease. It's built on top of Laravel Eloquent ORM.",
-    "autoload": {
-        "psr-4": {
-            "Bitsmind\\GraphSql\\": "src/"
-        }
+    "keywords": ["bitsmind", "graphsql", "laravel"],
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/Mohammad1745/graphsql-laravel/issues",
+        "source": "https://github.com/Mohammad1745/graphsql-laravel"
     },
     "authors": [
         {
@@ -12,6 +13,11 @@
             "email": "mdali2016.227@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Bitsmind\\GraphSql\\": "src/"
+        }
+    },
     "require": {
         "php": "^8.0"
     },

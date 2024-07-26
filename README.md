@@ -301,13 +301,13 @@ Response:
     ```
     composer require bitsmind/graphsql
     ```
-2. Create new table `graph_sql_keys` in database. We shall discuss it later.
+2. Migrate new table `graph_sql_keys` to database. We shall discuss it later.
     ```
     php artisan migrate
     ```
 3. Update `app/Http/Services/ProductService.php`
    ```
-   use GraphSql\Traits\QueryAssist;
+   use Bitsmind\GraphSql\QueryAssist;
    
    class ProductService extends Service
    {   
@@ -390,7 +390,7 @@ Returns identical content as before.
     ```
 2. Update `app/Http/Services/ProductService.php`
    ```
-   use GraphSql\Traits\QueryAssist;
+   use Bitsmind\GraphSql\QueryAssist;
    
    class ProductService extends Service
    {   
@@ -474,7 +474,7 @@ Let's see typical implementation first
 
 `app/Http/Services/ProductService.php`
    ```
-   use GraphSql\Traits\QueryAssist;
+   use Bitsmind\GraphSql\QueryAssist;
    
    class ProductService extends Service
    {   
@@ -544,7 +544,7 @@ GraphSql Shorthand
 
 `app/Http/Services/ProductService.php`
    ```
-   use GraphSql\Traits\QueryAssist;
+   use Bitsmind\GraphSql\QueryAssist;
    
    class ProductService extends Service
    {   
@@ -655,7 +655,7 @@ table: `graph_sql_keys`
     ```
    namespace App\Http\Services;
 
-   use GraphSql\Models\GraphSqlKey;
+   use Bitsmind\GraphSql\Models\GraphSqlKey;
    
    class GraphSqlKeyService
    {

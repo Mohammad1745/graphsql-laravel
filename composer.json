@@ -3,7 +3,7 @@
     "description": "GraphSql is a Graphql like syntactical method to read data from SQL databases with an ease. It's built on top of Laravel Eloquent ORM.",
     "autoload": {
         "psr-4": {
-            "Bitsmind\\Graphsql\\": "src/"
+            "Bitsmind\\GraphSql\\": "src/"
         }
     },
     "authors": [

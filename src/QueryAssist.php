@@ -2,7 +2,7 @@
 
 namespace Bitsmind\GraphSql;
 
-use Bitsmind\Graphsql\Models\GraphSqlKey;
+use Bitsmind\GraphSql\Models\GraphSqlKey;
 
 trait QueryAssist
 {

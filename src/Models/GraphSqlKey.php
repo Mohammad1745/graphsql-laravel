@@ -1,6 +1,6 @@
 <?php
 
-namespace Bitsmind\Graphsql\Models;
+namespace Bitsmind\GraphSql\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

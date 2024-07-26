@@ -607,7 +607,8 @@ their map keys.
 ### GraphSql Key Mapping
 
 Remember the table `graph_sql_keys` we migrated during installation? We will save our graph strings in that table
-and set a key on behalf of a string. We shall use `graph_key` instead of `graph` query params in apis.
+and set a key on behalf of a string: `customer_product_list` and `{name,image,category{name}}` in `key` and `string` 
+column respectively. We shall use `graph_key` instead of `graph` query params in apis.
 
 table: `graph_sql_keys`
 

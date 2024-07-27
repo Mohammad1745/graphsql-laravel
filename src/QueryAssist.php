@@ -226,7 +226,15 @@ trait QueryAssist
         $dbQuery = $dbQuery->select(...$fields);
 
         if (array_key_exists('nodes', $graph)) {
-            $dbQuery = $dbQuery->with( $this->queryGraphNodes($graph['nodes']));
+
+            [$nodes, $counts] = $this->splitNodes($graph['nodes']);
+
+            foreach ($counts as $count) {
+                $dbQuery = $dbQuery->withCount($count);
+            }
+            if (count($nodes)) {
+                $dbQuery = $dbQuery->with($this->queryGraphNodes($nodes));
+            }
         }
 
         return $dbQuery;
@@ -271,12 +279,43 @@ trait QueryAssist
                 }
 
                 if (array_key_exists('nodes', $node)) {
-                    $dbQuery->with( $this->queryGraphNodes($node['nodes']));
+
+                    [$nodes, $counts] = $this->splitNodes($node['nodes']);
+
+                    foreach ($counts as $count) {
+                        $dbQuery = $dbQuery->withCount($count);
+                    }
+                    if (count($nodes)) {
+                        $dbQuery = $dbQuery->with($this->queryGraphNodes($nodes));
+                    }
                 }
             };
         }
 
         return $relations;
+    }
+
+    /**
+     * @param array $allNodes
+     * @return array
+     */
+    protected function splitNodes (array $allNodes): array
+    {
+        $nodes = [];
+        $counts = [];
+        foreach ($allNodes as $node) {
+            if (gettype($node) == 'string') {
+                $dotCountPos = strpos($node, '.count');
+                if ($dotCountPos) {
+                    $counts [] = substr($node, 0, $dotCountPos);
+                }
+            }
+            else {
+                $nodes []= $node;
+            }
+        }
+
+        return [$nodes, $counts];
     }
 
     /**
@@ -337,6 +376,8 @@ trait QueryAssist
     protected function insertForeign (array &$node, array &$fields, $model): void
     {
         foreach ($node['nodes'] as $key => $child_node) {
+            // for counts no need to put foreign
+            if (gettype($child_node) == 'string') continue;
 
             $relation = $model->{$child_node["title"]}();
 
@@ -414,14 +455,15 @@ trait QueryAssist
                  * 1     2    2    1      0  -> $curly_brace_count
                  * 0     1    2    2      1  -> $prev_curly_brace_count
                  * to pick the entire sub-graph string: items{name,desc}
-                **/
+                 **/
             }
             else if ($ch == ',') {
                 $substr = substr($graphString, $comma_index+1, $i-$comma_index-1);
                 $bracePos = strpos($substr, '{');
+                $dotPos = strpos($substr, '.');
                 $bracePos ?
                     $graph['nodes'][] = $this->parseGraphString(substr($substr, $bracePos), substr($substr,0, $bracePos))
-                    : $graph['fields'][] = $substr;
+                    : ($dotPos ? $graph['nodes'][] = $substr : $graph['fields'][] = $substr);
 
                 $comma_index = $i;
             }
@@ -429,13 +471,17 @@ trait QueryAssist
                 if ($curly_brace_count==0) {
                     $substr = substr($graphString, $comma_index+1, $i-$comma_index-1);
                     $bracePos = strpos($substr, '{');
+                    $dotPos = strpos($substr, '.');
                     $bracePos ?
                         $graph['nodes'][] = $this->parseGraphString(substr($substr, $bracePos), substr($substr,0, $bracePos))
-                        : $graph['fields'][] = $substr;
+                        : ($dotPos ? $graph['nodes'][] = $substr : $graph['fields'][] = $substr);
                 }
                 else {
                     $substr = substr($graphString, $comma_index+1, $i-$comma_index);
-                    $graph['fields'][] = $substr;
+                    $dotPos = strpos($substr, '.');
+                    $dotPos ?
+                        $graph['nodes'][] = $substr
+                        : $graph['fields'][] = $substr;
                 }
 
                 $comma_index = $i;

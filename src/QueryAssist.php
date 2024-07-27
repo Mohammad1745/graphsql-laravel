@@ -111,7 +111,7 @@ trait QueryAssist
     }
 
     /**
-    $graphString = "{parent_id,name,parent{name,parent_id,image,parent{name,slug},children:2:10{name}}";
+    $graphString = "{parent_id,name,parent{name,parent_id,image,parent{name,slug},children(status=1):2:10{name},products.count}";
     to ->
     $graph = [
         "fields" => ['parent_id','name'],
@@ -133,10 +133,12 @@ trait QueryAssist
                     [
                         "title" => "children",
                         "foreign_keys" => [],
+                        "where" => [['status','1']],
                         "page" => 2,
                         "limit" => 10,
                         "fields" => ['name']
                     ]
+                    "products.count"
                 ]
             ]
         ]
@@ -147,6 +149,7 @@ trait QueryAssist
         $fields = ['name', 'parent_id', 'image'];
         $model = $dbQuery->getRelated();
         $dbQuery->select(...$this->getSelectFields($fields, $model));
+        $dbQuery->withCount("products")
         $dbQuery->with([
             'parent' => function($dbQuery) {
                 $model = $dbQuery->getRelated();

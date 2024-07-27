@@ -265,7 +265,7 @@ trait QueryAssist
                     }
                 }
 
-                if ($node['relation_type'] == 'HasMany') {
+                if ($node['relation_type'] == 'HasMany' && $node['page'] > 0 && $node['length'] > 0) {
                     $offset = ($node['page'] - 1) * $node['length'];
                     $dbQuery->offset($offset)->limit($node['length']);
                 }
@@ -455,8 +455,8 @@ trait QueryAssist
     {
         $title = "";
         $where = [];
-        $page = 1;
-        $length = 100;
+        $page = 0;
+        $length = 0;
 
         $comma_index = 0;
         $parenthesis_count = 0;

@@ -24,19 +24,12 @@ name of each product. Then we   ask `{name,image,category{name}}`. The api will 
 `product` having its `category` with field `name` only.
 \
 Or, list of products with its variations (table: `product_variations`), `variations{*}` returns all fields.
+\
+Or, list of products with its variations_count (table: `product_variations`), `variations.count`.
 
 We may add conditions in a node graphString, like, `variations(status=1,color=Blue){*}` returns variations of `status 1`
-and `color Blue`. 
-\
-For that we need to add a member in our `app/Models/ProductVariation.php` model
-```
-   public array $queryable = [
-     'status',
-     'color'
-   ]
-```
-
-Fields mentioned in the `$queryable` property of a model, can only be added in the conditions for a node.
+and `color Blue`. Or, `variations(status=1,color=Blue).count` returns `variations_count` of `status 1`
+and `color Blue` for individual product.
 
 ### Examples
 

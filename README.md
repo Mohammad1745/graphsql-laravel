@@ -28,7 +28,7 @@ Or, list of products with its variations (table: `product_variations`), `variati
 Or, list of products with its variations_count (table: `product_variations`), `variations.count`.
 
 We may add conditions in a node graphString, like, `variations(status=1,color=Blue){*}` returns variations of `status 1`
-and `color Blue`. 
+and `color Blue`. Allowed operators: `=`, `!=`, `>=`, `<=`, `>`, `<`.
 \
 Or, `variations(status=1,color=Blue).count` returns `variations_count` of `status 1` and `color Blue` for individual 
 product.

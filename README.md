@@ -28,8 +28,12 @@ Or, list of products with its variations (table: `product_variations`), `variati
 Or, list of products with its variations_count (table: `product_variations`), `variations.count`.
 
 We may add conditions in a node graphString, like, `variations(status=1,color=Blue){*}` returns variations of `status 1`
-and `color Blue`. Or, `variations(status=1,color=Blue).count` returns `variations_count` of `status 1`
-and `color Blue` for individual product.
+and `color Blue`. 
+\
+Or, `variations(status=1,color=Blue).count` returns `variations_count` of `status 1` and `color Blue` for individual 
+product.
+Or, `variations(status=1,color=Blue).sum.sale` returns `variations_sale_count` of `status 1` and `color Blue` for individual 
+product.
 
 ### Examples
 
@@ -140,7 +144,7 @@ Data from response:
 Api:
 
 ```
-product/list?graph={name,variations.count}
+product/list?graph={name,variations.count,variations.sum.sale}
 ```
 
 Data from response:
@@ -150,10 +154,12 @@ Data from response:
   {
      name:"Pressure Cooker",
      variations_count: 4,
+     variations_sum_sale: "200"
   },
   {
      name:"Induction Cooker",
      variations_count: 2,
+     variations_sum_sale: "80"
   },
   .
   .
@@ -380,6 +386,9 @@ Returns identical content as before.
  - `{name,image,category{*}}`
  - `{name,image,category{name}}`
  - `{name,image,category{name},variations{*}}`
+ - `{name,image,category{name},variations.count}`
+ - `{name,image,category{name},variations.sum.sale}`
+ - `{name,image,category{name},variations(status=1).count}`
  - Your imagination is the limit here
 
 #### Let's receive the string from api query params
@@ -461,6 +470,9 @@ Returns identical content.
 - `{name,image,category{*}}`
 - `{name,image,category{name}}`
 - `{name,image,category{name},variations{*}}`
+- `{name,image,category{name},variations.count}`
+- `{name,image,category{name},variations.sum.sale}`
+- `{name,image,category{name},variations(status=1).count}`
 - Your imagination is the limit here
 
 Try the same for the `product/{id}` api.

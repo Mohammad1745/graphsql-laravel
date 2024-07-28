@@ -230,9 +230,18 @@ trait QueryAssist
 
         if (array_key_exists('nodes', $graph)) {
 
-            [$nodes, $counts] = $this->splitNodes($graph['nodes']);
+            [$nodes, $counts, $sums] = $this->splitNodes($graph['nodes']);
 
-            if ($counts) {
+
+            if (count($sums)) {
+                foreach ($sums as $sum) {
+                    if (!count($sum['fields'])) {
+                        throw new \Exception("Missing field name for 'sum'");
+                    }
+                    $dbQuery = $dbQuery->withSum( $this->querySumNode($sum), $sum['fields'][0]);
+                }
+            }
+            if (count($counts)) {
                 $dbQuery = $dbQuery->withCount( $this->queryCountNodes($counts));
             }
             if (count($nodes)) {
@@ -277,13 +286,21 @@ trait QueryAssist
 
                 if (array_key_exists('nodes', $node)) {
 
-                    [$nodes, $counts] = $this->splitNodes($node['nodes']);
+                    [$nodes, $counts, $sums] = $this->splitNodes($node['nodes']);
 
-                    if ($counts) {
-                        $dbQuery = $dbQuery->withCount($this->queryCountNodes($counts));
+                    if (count($sums)) {
+                        foreach ($sums as $sum) {
+                            if (!count($sum['fields'])) {
+                                throw new \Exception("Missing field name for 'sum'");
+                            }
+                            $dbQuery = $dbQuery->withSum( $this->querySumNode($sum), $sum['fields'][0]);
+                        }
+                    }
+                    if (count($counts)) {
+                        $dbQuery = $dbQuery->withCount( $this->queryCountNodes($counts));
                     }
                     if (count($nodes)) {
-                        $dbQuery = $dbQuery->with($this->queryGraphNodes($nodes));
+                        $dbQuery = $dbQuery->with( $this->queryGraphNodes($nodes));
                     }
                 }
             };
@@ -311,6 +328,21 @@ trait QueryAssist
     }
 
     /**
+     * @param array $node
+     * @return array
+     */
+    protected function querySumNode (array $node): array
+    {
+        return [
+            $node["title"] => function ($dbQuery) use ($node) {
+                foreach ($node['where'] as $statement) {
+                    $dbQuery->where(...$statement);
+                }
+            }
+        ];
+    }
+
+    /**
      * @param array $allNodes
      * @return array
      */
@@ -318,6 +350,7 @@ trait QueryAssist
     {
         $nodes = [];
         $counts = [];
+        $sums = [];
         foreach ($allNodes as $node) {
             if ($node['type'] == 'subnode') {
                 $nodes [] = $node;
@@ -325,9 +358,12 @@ trait QueryAssist
             else if ($node['type'] == 'count') {
                 $counts []= $node;
             }
+            else if ($node['type'] == 'sum') {
+                $sums []= $node;
+            }
         }
 
-        return [$nodes, $counts];
+        return [$nodes, $counts, $sums];
     }
 
     /**
@@ -405,7 +441,6 @@ trait QueryAssist
                 // category has many products, so products.category_id is needed
                 $node['nodes'][$key]['foreign_keys'][] = $relation->getForeignKeyName();
             }
-            //TODO::belongsToMany
         }
     }
 
@@ -423,12 +458,16 @@ trait QueryAssist
             $graph['foreign_keys'] = [];
 
             [$title, $where, $page, $length] = $this->parseTitleString($title);
-            $graph['type'] = $this->parseNodeType($graphString);
 
             $graph['title'] = $title;
             $graph['where'] = $where;
             $graph['page'] = $page;
             $graph['length'] = $length;
+
+            $graph['type'] = $this->parseNodeType($graphString);
+            if ($graph['type'] == 'sum') {
+                $graph['fields'] = [str_replace('sum.', '', $graphString)];
+            }
         }
 
         $comma_index = 0;
@@ -583,6 +622,11 @@ trait QueryAssist
         $hasCountStr = str_contains($graphString, 'count');
         if ($hasCountStr) {
             return "count";
+        }
+
+        $hasSumStr = str_contains($graphString, 'sum.');
+        if ($hasSumStr) {
+            return "sum";
         }
 
         throw new \Exception("Invalid string '$graphString'");

@@ -106,10 +106,13 @@ Data from response:
 ```
 
 Api:
+
 ```
 product/list?graph={name,image,category{name},variations(status=1,color=Blue){*}}
 ```
+
 Data from response:
+
 ```
 [
   {
@@ -134,6 +137,30 @@ Data from response:
         .
         .
      ]
+  },
+  .
+  .
+  .
+]
+```
+
+Api:
+
+```
+product/list?graph={name,variations.count}
+```
+
+Data from response:
+
+```
+[
+  {
+     name:"Pressure Cooker",
+     variations_count: 4,
+  },
+  {
+     name:"Induction Cooker",
+     variations_count: 2,
   },
   .
   .
@@ -422,6 +449,7 @@ Returns identical content as before.
         .
    }
    ```
+   
 #### Let's check what we get now with query params
 
 Api:
@@ -583,6 +611,8 @@ GraphSql Shorthand
         }
    }
    ```
+
+Nice Hah!
 
 ## Attention
 

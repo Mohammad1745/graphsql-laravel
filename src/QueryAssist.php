@@ -232,11 +232,11 @@ trait QueryAssist
 
             [$nodes, $counts] = $this->splitNodes($graph['nodes']);
 
-            foreach ($counts as $count) {
-                $dbQuery = $dbQuery->withCount($count);
+            if ($counts) {
+                $dbQuery = $dbQuery->withCount( $this->queryCountNodes($counts));
             }
             if (count($nodes)) {
-                $dbQuery = $dbQuery->with($this->queryGraphNodes($nodes));
+                $dbQuery = $dbQuery->with( $this->queryGraphNodes($nodes));
             }
         }
 
@@ -253,7 +253,6 @@ trait QueryAssist
         foreach ($nodes as $node) {
             $relations[$node["title"]] = function($dbQuery)  use ($node) {
                 $model = $dbQuery->getRelated();
-                $queryable = $model->queryable ?? [];
 
                 // push any foreign key required for child model
                 $fields = [
@@ -268,12 +267,7 @@ trait QueryAssist
                 $dbQuery->select( ...$fields);
 
                 foreach ($node['where'] as $statement) {
-                    if (in_array($statement[0], $queryable)) {
-                        $dbQuery->where(...$statement);
-                    }
-                    else {
-                        throw new \Exception("Invalid key '" . $statement[0] . "' for query on node '" . $node['title'] . "'");
-                    }
+                    $dbQuery->where(...$statement);
                 }
 
                 if ($node['relation_type'] == 'HasMany' && $node['page'] > 0 && $node['length'] > 0) {
@@ -285,12 +279,30 @@ trait QueryAssist
 
                     [$nodes, $counts] = $this->splitNodes($node['nodes']);
 
-                    foreach ($counts as $count) {
-                        $dbQuery = $dbQuery->withCount($count);
+                    if ($counts) {
+                        $dbQuery = $dbQuery->withCount($this->queryCountNodes($counts));
                     }
                     if (count($nodes)) {
                         $dbQuery = $dbQuery->with($this->queryGraphNodes($nodes));
                     }
+                }
+            };
+        }
+
+        return $relations;
+    }
+
+    /**
+     * @param array $nodes
+     * @return array
+     */
+    protected function queryCountNodes (array $nodes): array
+    {
+        $relations = [];
+        foreach ($nodes as $node) {
+            $relations[$node["title"]] = function($dbQuery)  use ($node) {
+                foreach ($node['where'] as $statement) {
+                    $dbQuery->where(...$statement);
                 }
             };
         }
@@ -307,14 +319,11 @@ trait QueryAssist
         $nodes = [];
         $counts = [];
         foreach ($allNodes as $node) {
-            if (gettype($node) == 'string') {
-                $dotCountPos = strpos($node, '.count');
-                if ($dotCountPos) {
-                    $counts [] = substr($node, 0, $dotCountPos);
-                }
+            if ($node['type'] == 'subnode') {
+                $nodes [] = $node;
             }
-            else {
-                $nodes []= $node;
+            else if ($node['type'] == 'count') {
+                $counts []= $node;
             }
         }
 
@@ -380,7 +389,7 @@ trait QueryAssist
     {
         foreach ($node['nodes'] as $key => $child_node) {
             // for counts no need to put foreign
-            if (gettype($child_node) == 'string') continue;
+            if (array_key_exists('type', $node) && $node['type'] != 'subnode') continue;
 
             $relation = $model->{$child_node["title"]}();
 
@@ -414,6 +423,7 @@ trait QueryAssist
             $graph['foreign_keys'] = [];
 
             [$title, $where, $page, $length] = $this->parseTitleString($title);
+            $graph['type'] = $this->parseNodeType($graphString);
 
             $graph['title'] = $title;
             $graph['where'] = $where;
@@ -466,7 +476,9 @@ trait QueryAssist
                 $dotPos = strpos($substr, '.');
                 $bracePos ?
                     $graph['nodes'][] = $this->parseGraphString(substr($substr, $bracePos), substr($substr,0, $bracePos))
-                    : ($dotPos ? $graph['nodes'][] = $substr : $graph['fields'][] = $substr);
+                    : ($dotPos ?
+                    $graph['nodes'][] = $this->parseGraphString(substr($substr, $dotPos+1), substr($substr,0, $dotPos))
+                    : $graph['fields'][] = $substr);
 
                 $comma_index = $i;
             }
@@ -477,13 +489,15 @@ trait QueryAssist
                     $dotPos = strpos($substr, '.');
                     $bracePos ?
                         $graph['nodes'][] = $this->parseGraphString(substr($substr, $bracePos), substr($substr,0, $bracePos))
-                        : ($dotPos ? $graph['nodes'][] = $substr : $graph['fields'][] = $substr);
+                        : ($dotPos ?
+                        $graph['nodes'][] = $this->parseGraphString(substr($substr, $dotPos+1), substr($substr,0, $dotPos))
+                        : $graph['fields'][] = $substr);
                 }
                 else {
                     $substr = substr($graphString, $comma_index+1, $i-$comma_index);
                     $dotPos = strpos($substr, '.');
                     $dotPos ?
-                        $graph['nodes'][] = $substr
+                        $graph['nodes'][] = $this->parseGraphString(substr($substr, $dotPos+1), substr($substr,0, $dotPos))
                         : $graph['fields'][] = $substr;
                 }
 
@@ -555,22 +569,40 @@ trait QueryAssist
     }
 
     /**
+     * @param string $graphString
+     * @return string
+     * @throws \Exception
+     */
+    protected function parseNodeType (string $graphString): string
+    {
+        $hasBrace = str_contains($graphString, '{');
+        if ($hasBrace) {
+            return "subnode";
+        }
+
+        $hasCountStr = str_contains($graphString, 'count');
+        if ($hasCountStr) {
+            return "count";
+        }
+
+        throw new \Exception("Invalid string '$graphString'");
+    }
+
+    /**
      * @param string $whereString
      * @return array
      * @throws \Exception
      */
     protected function parseWhereClause(string $whereString): array
     {
-        if(strpos($whereString, '!=')) {
-            $arr = explode('!=', $whereString);
-            return [$arr[0], '!=', $arr[1]];
+        $comparators = ['!=', '=', '>=', '>', '<=', '<'];
+        foreach ($comparators as $comparator) {
+            if(strpos($whereString, $comparator)) {
+                $arr = explode($comparator, $whereString);
+                return [$arr[0], $comparator, $arr[1]];
+            }
         }
-        else if(strpos($whereString, '=')) {
-            $arr = explode('=', $whereString);
-            return [$arr[0], $arr[1]];
-        }
-        else {
-            throw new \Exception("Unknown query '$whereString'");
-        }
+
+        throw new \Exception("Unknown query '$whereString'");
     }
 }

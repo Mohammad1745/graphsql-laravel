@@ -3,9 +3,11 @@
 namespace Bitsmind\GraphSql;
 
 use Bitsmind\GraphSql\Models\GraphSqlKey;
+use Illuminate\Support\Facades\Cache;
 
 trait QueryAssist
 {
+    use Encryption;
     /**
      * @param $dbQuery
      * @param array $query
@@ -175,36 +177,52 @@ trait QueryAssist
      * @return mixed
      * @throws \Exception
      */
+    protected function queryGraphSQLEncrypted ($dbQuery, array $query, $model, callable $callback=null): mixed
+    {
+
+        if (array_key_exists('graph_enc', $query)) {
+
+            $secret = env('GRAPHSQL_SECRET');
+
+            $cacheKey = $query['graph_enc'] . $secret;
+
+            $query['graph'] =  Cache::remember($cacheKey, 3600, function () use ($query, $secret) {
+                return  $this->decrypt($query['graph_enc'], $secret);
+            });
+
+            $dbQuery = $this->queryGraphSQL($dbQuery, $query, $model, $callback);
+        }
+
+        return $dbQuery;
+    }
+
+    /**
+     * @param $dbQuery
+     * @param array $query
+     * @param $model
+     * @param callable|null $callback
+     * @return mixed
+     * @throws \Exception
+     */
     protected function queryGraphSQLByKey ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
-        $query['graph'] = "{*}";
 
         if (array_key_exists('graph_key', $query)) {
 
-            if (file_exists( base_path('graph_sql_key.json'))) {
+            $query['graph'] = "{*}";
 
-                $cachedData = file_get_contents(base_path('graph_sql_key.json'));
+            $cacheKey = 'test_'.$query['graph_key'];
 
-                if (!$cachedData) {
-                    $allKeys = GraphSqlKey::select('key','string')->get();
-                    file_put_contents(base_path('graph_sql_key.json'), $allKeys->toJson());
-                    $cachedData = file_get_contents(base_path('graph_sql_key.json'));
-                }
-
-                $keys = json_decode($cachedData, true);
-                $filtered = array_filter($keys, fn($el) => $el['key'] == $query['graph_key']);
-                if (count($filtered)) $query['graph'] = array_values($filtered)[0]['string'];
-                else throw new \Exception("Invalid graph_key '" . $query['graph_key'] . "'");
-
-            }
-            else {
+            $query['graph'] =  Cache::remember($cacheKey, 3600, function () use ($query) {
                 $data = GraphSqlKey::where('key', $query['graph_key'])->first();
-                if ($data) $query['graph'] = $data->string;
+                if ($data) return  $data->string;
                 else throw new \Exception("Invalid graph_key '" . $query['graph_key'] . "'");
-            }
+            });
+
+            $dbQuery = $this->queryGraphSQL($dbQuery, $query, $model, $callback);
         }
 
-        return $this->queryGraphSQL($dbQuery, $query, $model, $callback);
+        return $dbQuery;
     }
 
     /**

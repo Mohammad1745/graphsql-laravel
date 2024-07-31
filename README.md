@@ -32,7 +32,7 @@ and `color Blue`. Allowed operators: `=`, `!=`, `>=`, `<=`, `>`, `<`.
 \
 Or, `variations(status=1,color=Blue).count` returns `variations_count` of `status 1` and `color Blue` for individual 
 product.
-Or, `variations(status=1,color=Blue).sum.sale` returns `variations_sale_count` of `status 1` and `color Blue` for individual 
+Or, `variations(status=1,color=Blue).sum.sale` returns `variations_sum_sale` of `status 1` and `color Blue` for individual 
 product.
 
 ### Examples
@@ -348,7 +348,7 @@ Response:
                 ];
    
                 $dbQuery = Product::query();
-                $dbQuery = $this->queryGraphSql($dbQuery, $query, new Product);
+                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);
                 $products = $dbQuery->get();
               
                 return [
@@ -431,7 +431,7 @@ Returns identical content as before.
             try {
    
                 $dbQuery = Product::query();
-                $dbQuery = $this->queryGraphSql($dbQuery, $query, new Product);   
+                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);   
                 $products = $dbQuery->get();
               
                 return [
@@ -520,7 +520,7 @@ Let's see typical implementation first
                 $dbQuery = Product::query();
                 
                 // graphSql
-                $dbQuery = $this->queryGraphSql($dbQuery, $query, new Product);  
+                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);  
                 
                 // sorting
                 if (array_key_exists('order_by', $query)) {
@@ -589,7 +589,7 @@ GraphSql Shorthand
    
                 $dbQuery = Product::query();
                 
-                $dbQuery = $this->queryGraphSql($dbQuery, $query, new Product);           // graphSql
+                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);           // graphSql
                 $dbQuery = $this->queryOrderBy($dbQuery, $query, 'id', 'desc');           // sorting (default id,desc)
                 $dbQuery = $this->queryWhere($dbQuery, $query, ['status','category_id']); // column filters
                 $dbQuery = $this->queryWhereIn($dbQuery, $query, ['brand']);              // multi-option filters
@@ -636,10 +636,15 @@ This api will return product data with every order of for the product whether or
 
 #### What is the solution then?
 
-GraphSql provides out of the box solution for that. Instead of open graph string, we will map all strings and then use
-their map keys.
+GraphSql provides out of the box solutions for that:
 
-### GraphSql Key Mapping
+**Solution 1: Graphsql Key Mapping**
+\
+**Solution 2: Graphsql String Encryption**
+
+Instead of open graph string, we may map all strings and then use their map keys or use encrypted strings.
+
+### 1. GraphSql Key Mapping
 
 Remember the table `graph_sql_keys` we migrated during installation? We will save our graph strings in that table
 and set a key on behalf of a string: `customer_product_list` and `{name,image,category{name}}` in `key` and `string` 
@@ -741,8 +746,81 @@ table: `graph_sql_keys`
    }
     
     ```
+   
+Use ` $this->queryGraphSQLByKey` instead of ` $this->queryGraphSQLByKey`.
 
 Now the api call
 ```
 http://127.0.0.1:8800/api/product/list?graph_key=customer_product_list
 ```
+
+
+### 2. GraphSql String Encryption
+
+The graph string can be encrypted and send as query params. Remember, encryption is expensive.
+
+1. Use this encryption function in frontend to encrypt the string first
+
+   ```
+       //js
+       function encrypt (str, secret) {
+           const refCharSet =',.-_:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+           const refCharArray = refCharSet.split('')
+   
+           let shiftStrSet = secret.split('.')
+   
+           let encryptedStr = '';
+           // cipher
+           for (let i = 0; i < str.length; i++) {
+   
+               let shift = shiftStrSet[0][i % shiftStrSet[0].length].charCodeAt(0) % refCharSet.length;
+   
+               let index = refCharArray.indexOf(str.charAt(i))
+   
+               if (index > -1) {
+                   encryptedStr += refCharArray[(index + shift) % refCharSet.length];
+               } else {
+                   encryptedStr += str.charAt(i);
+               }
+           }
+   
+           if (shiftStrSet.length>1) {
+               //scramble
+               let charArray = encryptedStr.split('');
+   
+               for (let i = 0; i < encryptedStr.length; i++) {
+                   let shift = shiftStrSet[1][i % shiftStrSet[1].length].charCodeAt(0);
+   
+                   let newIndex = shift % encryptedStr.length;
+   
+                   [charArray[i], charArray[newIndex]] = [charArray[newIndex], charArray[i]];
+               }
+   
+               encryptedStr = charArray.join('');
+           }
+   
+           return encryptedStr
+       }
+   ```
+
+2. Set up e secret key in `.env`. The secret consist of two parts seperated by `.`. Use alphanumerics only. 
+Use the secret also in frontend during encryption
+
+   ```
+      GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.Dc4a5
+   ```
+
+3. Use ` $this->queryGraphSQLEncrypted` instead of ` $this->queryGraphSQLByKey` in `app/Http/Services/ProductService.php`.
+
+Now the api call
+```
+let graph = '{name,image,category{name}}'
+let secret = 'Gxe44Ybneaexc74scescet3.Dc4a5'
+let graphEnc = encrypt(graph, secret)
+http://127.0.0.1:8800/api/product/list?graph_enc=${graphEnc}
+```
+
+Using key-map requires managing a crud operation or manually updating a table. 
+Using encryption is a bit expensive from cpu perspective.
+
+So, choose which one fits the best for you.

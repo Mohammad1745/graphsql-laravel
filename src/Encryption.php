@@ -51,7 +51,9 @@ trait Encryption
 
         for ($i = 0; $i < strlen($str); $i++) {
 
-            $shift = ord($shiftStr[$i % strlen($shiftStr)]) % count($refCharArray);
+            $shift = ord($shiftStr[$i % strlen($shiftStr)]);
+
+            $shift = $shift >= 48 && $shift <= 57 ? $shift - 48 : $shift % count($refCharArray);
 
             $index = array_search($str[$i], $refCharArray);
 
@@ -76,7 +78,10 @@ trait Encryption
         $plainText = '';
 
         for ($i = 0; $i < strlen($cipherText); $i++) {
-            $shift = ord($shiftStr[$i % strlen($shiftStr)]) % count($refCharArray);
+
+            $shift = ord($shiftStr[$i % strlen($shiftStr)]);
+
+            $shift = $shift >= 48 && $shift <= 57 ? $shift - 48 : $shift % count($refCharArray);
 
             $index = array_search($cipherText[$i], $refCharArray);
 
@@ -100,8 +105,10 @@ trait Encryption
         $charArray = str_split($str);
 
         for ($i = 0; $i < strlen($str); $i++) {
+
             $shift = ord($shiftStr[$i % strlen($shiftStr)]);
-            $newIndex = $shift % strlen($str);
+
+            $newIndex = $shift >= 48 && $shift <= 57 ? $shift - 48 : $shift % strlen($str);
 
             $temp = $charArray[$i];
             $charArray[$i] = $charArray[$newIndex];
@@ -121,8 +128,10 @@ trait Encryption
         $charArray = str_split($str);
 
         for ($i = strlen($str) - 1; $i >= 0; $i--) {
+
             $shift = ord($shiftStr[$i % strlen($shiftStr)]);
-            $originalIndex = $shift % strlen($str);
+
+            $originalIndex = $shift >= 48 && $shift <= 57 ? $shift - 48 : $shift % strlen($str);
 
             $temp = $charArray[$i];
             $charArray[$i] = $charArray[$originalIndex];

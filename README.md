@@ -17,7 +17,7 @@ a single product list api.
 
 This is what **GraphSql** is.
 
-### Is GraphSql just limited to single table?
+#### Is GraphSql just limited to single table?
 
 Hahah, here we go, we can ask for additional data from related tables too. Imagine, we need product list with category 
 name of each product. Then we   ask `{name,image,category{name}}`. The api will return a list of product with each 
@@ -747,7 +747,7 @@ table: `graph_sql_keys`
     
     ```
    
-Use ` $this->queryGraphSQLByKey` instead of ` $this->queryGraphSQLByKey`.
+Use ` $this->queryGraphSQLByKey` instead of ` $this->queryGraphSQL`.
 
 Now the api call
 ```
@@ -762,63 +762,64 @@ The graph string can be encrypted and send as query params. Remember, encryption
 1. Use this encryption function in frontend to encrypt the string first
 
    ```
-       //js
-       function encrypt (str, secret) {
-           const refCharSet =',.-_:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-           const refCharArray = refCharSet.split('')
-   
-           let shiftStrSet = secret.split('.')
-   
-           let encryptedStr = '';
-           // cipher
-           for (let i = 0; i < str.length; i++) {
-   
-               let shift = shiftStrSet[0][i % shiftStrSet[0].length].charCodeAt(0) % refCharSet.length;
-   
-               let index = refCharArray.indexOf(str.charAt(i))
-   
-               if (index > -1) {
-                   encryptedStr += refCharArray[(index + shift) % refCharSet.length];
-               } else {
-                   encryptedStr += str.charAt(i);
-               }
-           }
-   
-           if (shiftStrSet.length>1) {
-               //scramble
-               let charArray = encryptedStr.split('');
-   
-               for (let i = 0; i < encryptedStr.length; i++) {
-                   let shift = shiftStrSet[1][i % shiftStrSet[1].length].charCodeAt(0);
-   
-                   let newIndex = shift % encryptedStr.length;
-   
-                   [charArray[i], charArray[newIndex]] = [charArray[newIndex], charArray[i]];
-               }
-   
-               encryptedStr = charArray.join('');
-           }
-   
-           return encryptedStr
-       }
+    //js
+    function encrypt (str, secret) {
+        const refCharSet =',.-_:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const refCharArray = refCharSet.split('')
+
+        let shiftStrSet = secret.split('.')
+
+        let encryptedStr = '';
+        // cipher
+        for (let i = 0; i < str.length; i++) {
+
+            let shift = shiftStrSet[0][i % shiftStrSet[0].length].charCodeAt(0);
+            shift = shift >= 48 && shift <= 57 ? shift - 48 : shift % refCharSet.length
+            let index = refCharArray.indexOf(str.charAt(i))
+
+            if (index > -1) {
+                encryptedStr += refCharArray[(index + shift) % refCharSet.length];
+            } else {
+                encryptedStr += str.charAt(i);
+            }
+        }
+
+        if (shiftStrSet.length>1) {
+            //scramble
+            let charArray = encryptedStr.split('');
+
+            for (let i = 0; i < encryptedStr.length; i++) {
+                let shift = shiftStrSet[1][i % shiftStrSet[1].length].charCodeAt(0);
+                let newIndex = shift >= 48 && shift <= 57 ? shift - 48 : shift % encryptedStr.length;
+                [charArray[i], charArray[newIndex]] = [charArray[newIndex], charArray[i]];
+            }
+
+            encryptedStr = charArray.join('');
+        }
+
+        return encryptedStr
+    }
    ```
 
 2. Set up e secret key in `.env`. The secret consist of two parts seperated by `.`. Use alphanumerics only. 
 Use the secret also in frontend during encryption
 
    ```
-      GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.Dc4a5
+   GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.DcYxw4a5
    ```
 
-3. Use ` $this->queryGraphSQLEncrypted` instead of ` $this->queryGraphSQLByKey` in `app/Http/Services/ProductService.php`.
+3. Use ` $this->queryGraphSQLEncrypted` instead of ` $this->queryGraphSQL` in `app/Http/Services/ProductService.php`.
 
 Now the api call
 ```
 let graph = '{name,image,category{name}}'
-let secret = 'Gxe44Ybneaexc74scescet3.Dc4a5'
+let secret = 'Gxe44Ybneaexc74scescet3.DcYxw4a5'
 let graphEnc = encrypt(graph, secret)
 http://127.0.0.1:8800/api/product/list?graph_enc=${graphEnc}
 ```
+
+For development environment, we usually do not require encryption. In this case, we may use `GRAPHSQL_SECRET=0`. Then 
+the encrypted string we be identical to the origin graph string. This will help us to debug easily in dev environment.
 
 Using key-map requires managing a crud operation or manually updating a table. 
 Using encryption is a bit expensive from cpu perspective.

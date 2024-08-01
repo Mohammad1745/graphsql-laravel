@@ -764,7 +764,7 @@ The graph string can be encrypted and send as query params. Remember, encryption
    ```
     //js
     function encrypt (str, secret) {
-        const refCharSet =',.-_:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const refCharSet =',_.-*:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
         const refCharArray = refCharSet.split('')
 
         let shiftStrSet = secret.split('.')

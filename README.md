@@ -625,7 +625,7 @@ If you have sensitive data then allowing direct graph string is a bit risky.
 
 #### How?
 
-Imagine a system with authentication system. So, any user is not allowed to access other user data. But look at the api
+Imagine a system with authentication. So, any user is not allowed to access other user data. But look at the api
 call below
 
 ```

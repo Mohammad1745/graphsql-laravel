@@ -807,8 +807,8 @@ The graph string can be encrypted and send as query params. Remember, encryption
 2. Set up e secret key in `.env`. The secret consist of alphanumeric strings seperated by `.` .
 Ex: `cipher.scramble1st.scramble2nd.scramble3rd`
 The first part generates cipher of the string and successive parts scramble the ciphered string. It's recommended to 
-use secret with at least 2 parts. Adding more parts will generate more complex encryption. Use the secret also in
-frontend during encryption
+use secret of 2 parts. Adding more parts will generate more complex encryption. Use the secret also in frontend during 
+encryption
 
    ```
    GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.DcYxw4a5

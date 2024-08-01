@@ -775,6 +775,7 @@ The graph string can be encrypted and send as query params. Remember, encryption
 
             let shift = shiftStrSet[0][i % shiftStrSet[0].length].charCodeAt(0);
             shift = shift >= 48 && shift <= 57 ? shift - 48 : shift % refCharSet.length
+
             let index = refCharArray.indexOf(str.charAt(i))
 
             if (index > -1) {
@@ -784,13 +785,15 @@ The graph string can be encrypted and send as query params. Remember, encryption
             }
         }
 
-        if (shiftStrSet.length>1) {
+        for (let sss=1; sss<shiftStrSet.length; sss++) {
             //scramble
             let charArray = encryptedStr.split('');
 
             for (let i = 0; i < encryptedStr.length; i++) {
-                let shift = shiftStrSet[1][i % shiftStrSet[1].length].charCodeAt(0);
+                let shift = shiftStrSet[sss][i % shiftStrSet[sss].length].charCodeAt(0);
+
                 let newIndex = shift >= 48 && shift <= 57 ? shift - 48 : shift % encryptedStr.length;
+
                 [charArray[i], charArray[newIndex]] = [charArray[newIndex], charArray[i]];
             }
 
@@ -801,8 +804,11 @@ The graph string can be encrypted and send as query params. Remember, encryption
     }
    ```
 
-2. Set up e secret key in `.env`. The secret consist of two parts seperated by `.`. Use alphanumerics only. 
-Use the secret also in frontend during encryption
+2. Set up e secret key in `.env`. The secret consist of alphanumeric strings seperated by `.` .
+Ex: `cipher.scramble1st.scramble2nd.scramble3rd`
+The first part generates cipher of the string and successive parts scramble the ciphered string. It's recommended to 
+use secret with at least 2 parts. Adding more parts will generate more complex encryption. Also keep in mind that
+encryption is expensive. Use the secret also in frontend during encryption
 
    ```
    GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.DcYxw4a5

@@ -18,8 +18,8 @@ trait Encryption
     {
         $shiftStrSet = explode('.', $secret);
         $encrypted = $this->generateCipher($str, $shiftStrSet[0]);
-        if (count($shiftStrSet)>1){
-            $encrypted = $this->scrambleString($encrypted, $shiftStrSet[1]);
+        for ($sss=1; $sss<count($shiftStrSet); $sss++){
+            $encrypted = $this->scrambleString($encrypted, $shiftStrSet[$sss]);
         }
         return $encrypted;
     }
@@ -33,8 +33,8 @@ trait Encryption
     {
         $shiftStrSet = explode('.', $secret);
         $decrypted = $encrypted;
-        if (count($shiftStrSet)>1){
-            $decrypted = $this->unscrambleString($decrypted, $shiftStrSet[1]);
+        for ($sss=count($shiftStrSet)-1; $sss>0; $sss--){
+            $decrypted = $this->unscrambleString($decrypted, $shiftStrSet[$sss]);
         }
         return $this->decipher($decrypted, $shiftStrSet[0]);
     }

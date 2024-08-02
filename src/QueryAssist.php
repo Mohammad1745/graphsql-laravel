@@ -179,6 +179,7 @@ trait QueryAssist
      */
     protected function queryGraphSQLEncrypted ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
+        $query['graph'] = "{*}";
 
         if (array_key_exists('graph_enc', $query)) {
 
@@ -190,10 +191,9 @@ trait QueryAssist
                 return  $this->decrypt($query['graph_enc'], $secret);
             });
 
-            $dbQuery = $this->queryGraphSQL($dbQuery, $query, $model, $callback);
         }
 
-        return $dbQuery;
+        return $this->queryGraphSQL($dbQuery, $query, $model, $callback);
     }
 
     /**
@@ -207,9 +207,9 @@ trait QueryAssist
     protected function queryGraphSQLByKey ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
 
-        if (array_key_exists('graph_key', $query)) {
+        $query['graph'] = "{*}";
 
-            $query['graph'] = "{*}";
+        if (array_key_exists('graph_key', $query)) {
 
             $cacheKey = 'test_'.$query['graph_key'];
 
@@ -219,10 +219,9 @@ trait QueryAssist
                 else throw new \Exception("Invalid graph_key '" . $query['graph_key'] . "'");
             });
 
-            $dbQuery = $this->queryGraphSQL($dbQuery, $query, $model, $callback);
         }
 
-        return $dbQuery;
+        return $this->queryGraphSQL($dbQuery, $query, $model, $callback);
     }
 
     /**

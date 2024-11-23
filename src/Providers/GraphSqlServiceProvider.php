@@ -13,8 +13,11 @@ class GraphSqlServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton('query-assist', function () {
+        $this->app->singleton('graphsql-query-assist', function () {
             return new \Bitsmind\GraphSql\Services\QueryAssistService();
+        });
+        $this->app->singleton('graphsql-schema', function () {
+            return new \Bitsmind\GraphSql\Services\SchemaService();
         });
 
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');

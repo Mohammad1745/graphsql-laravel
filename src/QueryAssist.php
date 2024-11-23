@@ -15,7 +15,7 @@ trait QueryAssist
      * @param int $defaultLength
      * @return mixed
      */
-    protected function queryPagination ($dbQuery, array &$query, int $defaultPage = 1, int $defaultLength = 100): mixed
+    public function queryPagination ($dbQuery, array &$query, int $defaultPage = 1, int $defaultLength = 100): mixed
     {
         if (!array_key_exists('page', $query))      $query['page']      = $defaultPage;
         if (!array_key_exists('length', $query))    $query['length']    = $defaultLength;
@@ -31,7 +31,7 @@ trait QueryAssist
      * @param string $defaultOrder
      * @return mixed
      */
-    protected function queryOrderBy ($dbQuery, array $query, string $defaultColumn='id', string $defaultOrder='desc'): mixed
+    public function queryOrderBy ($dbQuery, array $query, string $defaultColumn='id', string $defaultOrder='desc'): mixed
     {
         if (array_key_exists('order_by', $query)) {
             [$column, $order] = explode(',',$query['order_by']);
@@ -49,7 +49,7 @@ trait QueryAssist
      * @param array $query
      * @return mixed
      */
-    protected function queryHas ($dbQuery, array $query): mixed
+    public function queryHas ($dbQuery, array $query): mixed
     {
         if(array_key_exists('has', $query)) {
             $relations = explode(',', $query['has']);
@@ -67,7 +67,7 @@ trait QueryAssist
      * @param array $columns
      * @return mixed
      */
-    protected function queryWhere ($dbQuery, array $query, array $columns): mixed
+    public function queryWhere ($dbQuery, array $query, array $columns): mixed
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
@@ -84,7 +84,7 @@ trait QueryAssist
      * @param array $columns
      * @return mixed
      */
-    protected function queryWhereIn ($dbQuery, array $query, array $columns): mixed
+    public function queryWhereIn ($dbQuery, array $query, array $columns): mixed
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
@@ -101,7 +101,7 @@ trait QueryAssist
      * @param array $columns
      * @return mixed
      */
-    protected function queryWhereNotIn ($dbQuery, array $query, array $columns): mixed
+    public function queryWhereNotIn ($dbQuery, array $query, array $columns): mixed
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
@@ -177,7 +177,7 @@ trait QueryAssist
      * @return mixed
      * @throws \Exception
      */
-    protected function queryGraphSQLEncrypted ($dbQuery, array $query, $model, callable $callback=null): mixed
+    public function queryGraphSQLEncrypted ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
         $query['graph'] = "{*}";
 
@@ -204,7 +204,7 @@ trait QueryAssist
      * @return mixed
      * @throws \Exception
      */
-    protected function queryGraphSQLByKey ($dbQuery, array $query, $model, callable $callback=null): mixed
+    public function queryGraphSQLByKey ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
 
         $query['graph'] = "{*}";
@@ -232,7 +232,7 @@ trait QueryAssist
      * @return mixed
      * @throws \Exception
      */
-    protected function queryGraphSQL ($dbQuery, array $query, $model, callable $callback=null): mixed
+    public function queryGraphSQL ($dbQuery, array $query, $model, callable $callback=null): mixed
     {
         $graphString = array_key_exists('graph', $query) ? $query['graph'] : "{*}";
 

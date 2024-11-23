@@ -333,13 +333,10 @@ Response:
     ```
 3. Update `app/Http/Services/ProductService.php`
    ```
-   use Bitsmind\GraphSql\QueryAssist;
+   use Bitsmind\GraphSql\Facades\QueryAssist;
    
    class ProductService extends Service
-   {   
-   
-        use QueryAssist;
-   
+   {      
         public function getList (): array
         {
             try {
@@ -348,7 +345,7 @@ Response:
                 ];
    
                 $dbQuery = Product::query();
-                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);
+                $dbQuery = QueryAssist::queryGraphSQL($dbQuery, $query, new Product);
                 $products = $dbQuery->get();
               
                 return [
@@ -419,19 +416,16 @@ Returns identical content as before.
     ```
 2. Update `app/Http/Services/ProductService.php`
    ```
-   use Bitsmind\GraphSql\QueryAssist;
+   use Bitsmind\GraphSql\Facades\QueryAssist;
    
    class ProductService extends Service
-   {   
-   
-        use QueryAssist;
-   
+   {      
         public function getList (array $query): array
         {
             try {
    
                 $dbQuery = Product::query();
-                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);   
+                $dbQuery = QueryAssist::queryGraphSQL($dbQuery, $query, new Product);   
                 $products = $dbQuery->get();
               
                 return [
@@ -507,12 +501,10 @@ Let's see typical implementation first
 
 `app/Http/Services/ProductService.php`
    ```
-   use Bitsmind\GraphSql\QueryAssist;
+   use Bitsmind\GraphSql\Facades\QueryAssist;
    
    class ProductService extends Service
    {   
-        use QueryAssist;
-   
         public function getList (array $query): array
         {
             try {
@@ -520,7 +512,7 @@ Let's see typical implementation first
                 $dbQuery = Product::query();
                 
                 // graphSql
-                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);  
+                $dbQuery = QueryAssist::queryGraphSQL($dbQuery, $query, new Product);  
                 
                 // sorting
                 if (array_key_exists('order_by', $query)) {
@@ -577,25 +569,23 @@ GraphSql Shorthand
 
 `app/Http/Services/ProductService.php`
    ```
-   use Bitsmind\GraphSql\QueryAssist;
+   use Bitsmind\GraphSql\Facades\QueryAssist;
    
    class ProductService extends Service
-   {   
-        use QueryAssist;
-   
+   {      
         public function getList (array $query): array
         {
             try {
    
                 $dbQuery = Product::query();
                 
-                $dbQuery = $this->queryGraphSQL($dbQuery, $query, new Product);           // graphSql
-                $dbQuery = $this->queryOrderBy($dbQuery, $query, 'id', 'desc');           // sorting (default id,desc)
-                $dbQuery = $this->queryWhere($dbQuery, $query, ['status','category_id']); // column filters
-                $dbQuery = $this->queryWhereIn($dbQuery, $query, ['brand']);              // multi-option filters
+                $dbQuery = QueryAssist::queryGraphSQL($dbQuery, $query, new Product);           // graphSql
+                $dbQuery = QueryAssist::queryOrderBy($dbQuery, $query, 'id', 'desc');           // sorting (default id,desc)
+                $dbQuery = QueryAssist::queryWhere($dbQuery, $query, ['status','category_id']); // column filters
+                $dbQuery = QueryAssist::queryWhereIn($dbQuery, $query, ['brand']);              // multi-option filters
                 
                 $count = $dbQuery->count();
-                $products = $this->queryPagination($dbQuery, $query)->get();              // pagination
+                $products = QueryAssist::queryPagination($dbQuery, $query)->get();              // pagination
               
                 return [
                     'success' => true,
@@ -747,7 +737,7 @@ table: `graph_sql_keys`
     
     ```
    
-Use ` $this->queryGraphSQLByKey` instead of ` $this->queryGraphSQL`.
+Use ` QueryAssist::queryGraphSQLByKey` instead of ` QueryAssist::queryGraphSQL`.
 
 Now the api call
 ```
@@ -814,7 +804,7 @@ encryption
    GRAPHSQL_SECRET=Gxe44Ybneaexc74scescet3.DcYxw4a5
    ```
 
-3. Use ` $this->queryGraphSQLEncrypted` instead of ` $this->queryGraphSQL` in `app/Http/Services/ProductService.php`.
+3. Use ` QueryAssist::queryGraphSQLEncrypted` instead of ` QueryAssist::queryGraphSQL` in `app/Http/Services/ProductService.php`.
 
 Now the api call
 ```

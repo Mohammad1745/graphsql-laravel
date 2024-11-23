@@ -7,7 +7,7 @@ trait Encryption
     /**
      * @var string
      */
-    public string $refCharSet =',_.-*:(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    public string $refCharSet =',_.-=><*:!(){}[]0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     /**
      * @param $str

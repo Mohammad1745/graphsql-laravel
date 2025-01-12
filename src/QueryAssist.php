@@ -446,15 +446,23 @@ trait QueryAssist
 
             $relation = $model->{$child_node["title"]}();
 
+            // Unnecessary -- starts
             if (strpos(get_class($relation), 'HasMany')) {
                 $node['nodes'][$key]['relation_type'] = "HasMany";
             }
+            else if (strpos(get_class($relation), 'HasOne')) {
+                $node['nodes'][$key]['relation_type'] = "HasOne";
+            }
+            // Unnecessary -- ends
 
-            if (strpos(get_class($relation), 'BelongsTo')) {
+            if (strpos(get_class($relation), 'BelongsToMany')) {
+                // skip
+            }
+            else if (strpos(get_class($relation), 'BelongsTo')) {
                 // product belongs to category, so products.category_id is needed
                 $fields[] = $relation->getForeignKeyName();
             }
-            else {
+            else if (strpos(get_class($relation), 'HasMany') || strpos(get_class($relation), 'HasOne')) {
                 // category has many products, so products.category_id is needed
                 $node['nodes'][$key]['foreign_keys'][] = $relation->getForeignKeyName();
             }

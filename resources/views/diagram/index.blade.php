@@ -175,130 +175,137 @@
             highlightRelatedTableOnClick()
         })
 
-    })
-
-    function renderContent(dom, schema, sortBy, searchBy="", mainTable=null, idPrefix='') {
-        schema = schema.filter(s => s.table.startsWith(searchBy))
-        schema.sort((a,b) => {
-            return sortBy === 'column_count' ?
-                a.fields.length - b.fields.length
-                : a.table.localeCompare(b.table)
-        })
-        if (mainTable) {
-            const filtered = schema.filter(s => s.table === mainTable)
-            if (filtered.length) {
-                schema = schema.filter(s => s.table !== mainTable)
-                mainTable = filtered[0]
+        function renderContent(dom, schema, sortBy, searchBy="", mainTable=null, idPrefix='') {
+            schema = schema.filter(s => s.table.startsWith(searchBy))
+            schema.sort((a,b) => {
+                return sortBy === 'column_count' ?
+                    a.fields.length - b.fields.length
+                    : a.table.localeCompare(b.table)
+            })
+            if (mainTable) {
+                const filtered = schema.filter(s => s.table === mainTable)
+                if (filtered.length) {
+                    schema = schema.filter(s => s.table !== mainTable)
+                    mainTable = filtered[0]
+                }
             }
-        }
 
-        let html = ``
-        if (mainTable) {
-            html += `
-                <div class="table-list">
-                    <div class="main-table">
-                        <div><strong>Table:</strong> ${mainTable.table}</div>
-                        <div><strong>Columns:</strong> ${mainTable.fields.map(field => field).join(', ')}</div>
-                        <div><strong>Special:</strong> ${mainTable.specialFields.map(field => field).join(', ')}</div>
-                        <div><strong>Nodes:</strong> </div>
-                        <ol style="margin: 0">
-                            ${mainTable.nodes.map(node => `<li><strong>${node.title}</strong> | <strong>${node.table}</strong> (Table) ${node.pivot ? `| <strong>${node.pivot}</strong> (Pivot) ` : ''}</li>`).join('')}
-                        </ol>
-
-                    </div>
-            `
-            html += generateTableCard(mainTable, idPrefix)
-            html += `</div> <hr>`
-        }
-
-        html += `<div class="table-list">`
-        schema.forEach(entity => {
-            html += generateTableCard(entity, idPrefix)
-        })
-        html += `</div>`
-
-        dom.innerHTML = html
-    }
-
-    function generateTableCard(entity, idPrefix="") {
-        let html = `
-                <div class="table" id="${idPrefix}${entity.table}" data-table="${entity.table}" data-node-count="${entity.nodes.length}" ${entity.nodes.length ? 'style="cursor: pointer;"' : ''}>
-                    <div class="table-name">${entity.table} (${entity.fields.length})</div>
-                    <div class="column-list">
-            `
-        entity.fields.forEach(field => {
-            html += `
-                    <div class="column-name">${field}</div>
-                `
-        })
-
-        html += `
-                    </div>
-           `
-        if (entity.nodes.length) {
-            html += `
-                    <div class="node-list">
-                        <div>Rel: </div>
-                `
-            entity.nodes.forEach(node => {
+            let html = ``
+            if (mainTable) {
                 html += `
-                    <div class="node-title" data-table="${node.table}">
-                        ${node.title}
-                    </div>
+                    <div class="table-list">
+                        <div class="main-table">
+                            <div><strong>Table:</strong> ${mainTable.table}</div>
+                            <div><strong>Columns:</strong> ${mainTable.fields.map(field => field).join(', ')}</div>
+                            <div><strong>Special:</strong> ${mainTable.specialFields.map(field => field).join(', ')}</div>
+                            <div><strong>Nodes:</strong> </div>
+                            <ol style="margin: 0">
+                                ${mainTable.nodes.map(node => `<li><strong>${node.title}</strong> | <strong>${node.table}</strong> (Table) ${node.pivot ? `| <strong>${node.pivot}</strong> (Pivot) ` : ''}</li>`).join('')}
+                            </ol>
+
+                        </div>
                 `
+                html += generateTableCard(mainTable, idPrefix)
+                html += `</div> <hr>`
+            }
+
+            html += `<div class="table-list">`
+            schema.forEach(entity => {
+                html += generateTableCard(entity, idPrefix)
             })
+            html += `</div>`
+
+            dom.innerHTML = html
+        }
+
+        function generateTableCard(entity, idPrefix="") {
+            let html = `
+                    <div class="table" id="${idPrefix}${entity.table}" data-table="${entity.table}" data-node-count="${entity.nodes.length}" ${entity.nodes.length ? 'style="cursor: pointer;"' : ''}>
+                        <div class="table-name">${entity.table} (${entity.fields.length})</div>
+                        <div class="column-list">
+                `
+            entity.fields.forEach(field => {
+                html += `
+                        <div class="column-name">${field}</div>
+                    `
+            })
+
+            html += `
+                        </div>
+               `
+            if (entity.nodes.length) {
+                html += `
+                        <div class="node-list">
+                            <div>Rel: </div>
+                    `
+                entity.nodes.forEach(node => {
+                    html += `
+                        <div class="node-title" data-table="${node.table}">
+                            ${node.title}
+                        </div>
+                    `
+                })
+                html += `
+                        </div>
+                    `
+            }
             html += `
                     </div>
                 `
+            return html
         }
-        html += `
-                </div>
-            `
-        return html
-    }
 
-    function showTableDetailsOnClick(schema, sortBy) {
-        const modalCloseBtn = document.getElementById('modal_close_btn')
-        const modalWrapper = document.getElementById('modal_wrapper')
-        const modalBody = document.getElementById('modal_body')
-        const tables = document.querySelectorAll('.table')
-        tables.forEach(table => {
-            table.addEventListener('click', function () {
-                const tableName = table.getAttribute('data-table')
-                const nodeCount = Number(table.getAttribute('data-node-count'))
-                if (nodeCount) {
-                    const filteredSchema = schema.filter(s => s.table === tableName)
-                    const filteredSchema2 = schema.filter(s => filteredSchema[0].nodes.filter(n => n.table === s.table || n.pivot === s.table).length)
-                    const newSchema = [...filteredSchema, ...filteredSchema2]
-                    renderContent(modalBody, newSchema, sortBy, '', tableName, 'modal_')
-                    modalWrapper.style.display = 'block'
+        function showTableDetailsOnClick(schema, sortBy) {
+            const modalCloseBtn = document.getElementById('modal_close_btn')
+            const modalWrapper = document.getElementById('modal_wrapper')
+            const modalBody = document.getElementById('modal_body')
+            const tables = document.querySelectorAll('.table')
+            tables.forEach(table => {
+                table.addEventListener('click', function () {
+                    const tableName = table.getAttribute('data-table')
+                    const nodeCount = Number(table.getAttribute('data-node-count'))
+                    if (nodeCount) {
+                        const filteredSchema = schema.filter(s => s.table === tableName)
+                        const filteredSchema2 = schema.filter(s => filteredSchema[0].nodes.filter(n => n.table === s.table || n.pivot === s.table).length)
+                        const newSchema = [...filteredSchema, ...filteredSchema2]
+                        renderContent(modalBody, newSchema, sortBy, '', tableName, 'modal_')
+                        modalWrapper.style.display = 'block'
+                        showTableDetailsOnClick(schema, sortBy)
+                    }
+                })
+            })
+            modalCloseBtn.addEventListener('click', function () {
+                modalWrapper.style.display = 'none'
+            })
+        }
+
+        function highlightRelatedTableOnClick() {
+            const nodeTitles = document.querySelectorAll('.node-title')
+            nodeTitles.forEach(nodeTitle => {
+                nodeTitle.addEventListener('click', function (e) {
+                    e.stopPropagation()
+                    const targetTable = nodeTitle.getAttribute('data-table')
+
+                    searchBy = ""
+                    searchInput.value = ""
+                    renderContent(contentDom, schema, sortBy, searchBy)
                     showTableDetailsOnClick(schema, sortBy)
-                }
-            })
-        })
-        modalCloseBtn.addEventListener('click', function () {
-            modalWrapper.style.display = 'none'
-        })
-    }
+                    highlightRelatedTableOnClick()
 
-    function highlightRelatedTableOnClick() {
-        const nodeTitles = document.querySelectorAll('.node-title')
-        nodeTitles.forEach(nodeTitle => {
-            nodeTitle.addEventListener('click', function (e) {
-                e.stopPropagation()
-                const targetTable = nodeTitle.getAttribute('data-table')
-                const targetTableDom = document.getElementById(targetTable)
-                if (targetTableDom) {
-                    targetTableDom.scrollIntoView({ behavior: "smooth", block: "center" })
-                    targetTableDom.classList.add('animate-opacity-ping')
-                    nodeTitle.classList.add('animate-opacity-ping')
-                    setTimeout(() => {
-                        targetTableDom.classList.remove('animate-opacity-ping')
-                        nodeTitle.classList.remove('animate-opacity-ping')
-                    }, 3000)
-                }
+                    const targetTableDom = document.getElementById(targetTable)
+                    if (targetTableDom) {
+                        targetTableDom.scrollIntoView({ behavior: "smooth", block: "center" })
+                        targetTableDom.classList.add('animate-opacity-ping')
+                        nodeTitle.classList.add('animate-opacity-ping')
+                        setTimeout(() => {
+                            targetTableDom.classList.remove('animate-opacity-ping')
+                            nodeTitle.classList.remove('animate-opacity-ping')
+                        }, 3000)
+                    }
+                })
             })
-        })
-    }
+        }
+
+    })
 </script>
 </html>

@@ -15,10 +15,11 @@ trait Schema
     /**
      * @param string $modelPath
      * @param string $search
+     * @param bool $showHidden
      * @return array
      * @throws \ReflectionException
      */
-    public function getSchema (string $modelPath='app/Models', string $search=''): array
+    public function getSchema (string $modelPath='app/Models', string $search='', bool $showHidden=false): array
     {
 
         $files = File::allFiles( app_path( str_replace('app/', '', $modelPath)));
@@ -38,7 +39,7 @@ trait Schema
                 if (str_starts_with($tableName, $search)) {
                     $fillable = $model->getFillable();
                     $hidden = $model->getHidden();
-                    if (count($hidden)) {
+                    if (!$showHidden && count($hidden)) {
                         $fillable = array_values( array_filter($fillable, fn($value) => !in_array($value, $hidden)));
                     }
 

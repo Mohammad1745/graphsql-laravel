@@ -5,7 +5,7 @@ namespace Bitsmind\GraphSql\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static array getSchema (string $modelPath = 'app/Models', string $search = '')
+ * @method static array getSchema (string $modelPath = 'app/Models', string $search = '', bool $showHidden=false)
  *
  * @see \Bitsmind\GraphSql\Schema
  */

@@ -18,7 +18,7 @@ trait Schema
      * @return array
      * @throws \ReflectionException
      */
-    public function getSchema ($modelPath='app/Models', string $search=''): array
+    public function getSchema (string $modelPath='app/Models', string $search=''): array
     {
 
         $files = File::allFiles( app_path( str_replace('app/', '', $modelPath)));
@@ -33,16 +33,25 @@ trait Schema
                 );
             if (is_subclass_of($className, 'Illuminate\Database\Eloquent\Model') && !(new \ReflectionClass($className))->isAbstract()) {
                 $model = App::make($className);
-
                 $tableName = $model->getTable();
-                $fillable = $model->getFillable();
-                $hidden = $model->getHidden();
-                if (count($hidden)) {
-                    $fillable = array_values( array_filter($fillable, fn($value) => !in_array($value, $hidden)));
-                }
-
                 // search
                 if (str_starts_with($tableName, $search)) {
+                    $fillable = $model->getFillable();
+                    $hidden = $model->getHidden();
+                    if (count($hidden)) {
+                        $fillable = array_values( array_filter($fillable, fn($value) => !in_array($value, $hidden)));
+                    }
+
+//                    $fillable = array_map(function ($column) use ($model) {
+//                        $table = $model->getTable();
+//                        $type = IlluminateSchema::getColumnType($table, $column, true);
+//
+//                        return [
+//                            'column' => $column,
+//                            'type' => $type,
+//                        ];
+//                    }, $model->getFillable());
+
                     $models[] = [
                         'table' => $tableName,
                         'fields' => $fillable,
@@ -75,10 +84,17 @@ trait Schema
 
             if (strpos($classPath, 'BelongsToMany')) {
                 $pivot = $relation->getTable();
-                return "[$node]$pivot,$related";
+                return [
+                    'title' => $node,
+                    'pivot' => $pivot,
+                    'table' => $related
+                ];
             }
             else {
-                return "[$node]$related";
+                return [
+                    'title' => $node,
+                    'table' => $related
+                ];
             }
 
         }, $relations);

@@ -11,13 +11,18 @@
         body {
             font-family: 'Roboto', sans-serif;
         }
-        .sorting-menu {
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .menu {
             padding: 5px;
             display: flex;
             align-items: center;
             gap: 5px;
         }
-        .sorting-select {
+        .input {
             font-size: 1rem;
             padding: 5px;
         }
@@ -118,12 +123,18 @@
 <body>
 <h1>GraphSQL Diagram</h1>
 <div id="schema" data-schema="{{ json_encode($schema) }}"> </div>
-<div class="sorting-menu">
-    <div>Sort By</div>
-    <select id="sorting_select" class="sorting-select">
-        <option value="column_count" selected>Column Count</option>
-        <option value="table_name">Table Name</option>
-    </select>
+<div class="menu-bar">
+    <div class="menu">
+        <div>Sort By</div>
+        <select id="sorting_select" class="input">
+            <option value="column_count" selected>Column Count</option>
+            <option value="table_name">Table Name</option>
+        </select>
+    </div>
+    <div class="menu">
+        <div>Search </div>
+        <input type="text" id="search_input" class="input" placeholder="Type something...">
+    </div>
 </div>
 <div id="content"></div>
 <div id="modal_wrapper" class="modal-wrapper">
@@ -138,29 +149,36 @@
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const modalContent = null
+        let sortBy = 'column_count'
+        let searchBy = ''
         const schema = JSON.parse(document.getElementById('schema').getAttribute('data-schema'))
         console.log(schema)
 
         const contentDom = document.getElementById('content')
-        renderContent(contentDom, schema, 'column_count')
-        showTableDetailsOnClick(schema, 'column_count')
+        renderContent(contentDom, schema, sortBy)
+        showTableDetailsOnClick(schema, sortBy)
         highlightRelatedTableOnClick()
 
         const sortingSelect = document.getElementById('sorting_select')
         sortingSelect.addEventListener('change', function (e) {
-            renderContent(contentDom, schema, e.target.value)
-            showTableDetailsOnClick(schema, e.target.value)
+            sortBy = e.target.value
+            renderContent(contentDom, schema, sortBy, searchBy)
+            showTableDetailsOnClick(schema, sortBy)
             highlightRelatedTableOnClick()
         })
 
-
-
+        const searchInput = document.getElementById('search_input')
+        searchInput.addEventListener('input', function (e) {
+            searchBy = e.target.value
+            renderContent(contentDom, schema, sortBy, searchBy)
+            showTableDetailsOnClick(schema, sortBy)
+            highlightRelatedTableOnClick()
+        })
 
     })
 
-    function renderContent(dom, schema, sortBy, mainTable=null, idPrefix='') {
-        console.log(sortBy)
+    function renderContent(dom, schema, sortBy, searchBy="", mainTable=null, idPrefix='') {
+        schema = schema.filter(s => s.table.startsWith(searchBy))
         schema.sort((a,b) => {
             return sortBy === 'column_count' ?
                 a.fields.length - b.fields.length
@@ -252,7 +270,7 @@
                     const filteredSchema = schema.filter(s => s.table === tableName)
                     const filteredSchema2 = schema.filter(s => filteredSchema[0].nodes.filter(n => n.table === s.table || n.pivot === s.table).length)
                     const newSchema = [...filteredSchema, ...filteredSchema2]
-                    renderContent(modalBody, newSchema, sortBy, tableName, 'modal_')
+                    renderContent(modalBody, newSchema, sortBy, '', tableName, 'modal_')
                     modalWrapper.style.display = 'block'
                     showTableDetailsOnClick(schema, sortBy)
                 }

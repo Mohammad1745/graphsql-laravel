@@ -28,10 +28,10 @@ trait Schema
         foreach ($files as $file) {
             $namespace = app()->getNamespace();
             $className = $namespace . str_replace(
-                    ['/', '.php'],
-                    ['\\', ''],
-                    Str::after($file->getPathname(), app_path() . DIRECTORY_SEPARATOR)
-                );
+                ['/', '.php'],
+                ['\\', ''],
+                Str::after($file->getPathname(), app_path() . DIRECTORY_SEPARATOR)
+            );
             if (is_subclass_of($className, 'Illuminate\Database\Eloquent\Model') && !(new \ReflectionClass($className))->isAbstract()) {
                 $model = App::make($className);
                 $tableName = $model->getTable();

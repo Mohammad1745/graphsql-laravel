@@ -192,7 +192,8 @@ It's making sense now? That's where they come.
 
 ### Pre-requisites
  - Laravel Application minimum version 8
- - Models: User, Category, Product, ProductVariation, CartItem etc
+ - Models: Ex: User, Category, Product, ProductVariation, CartItem etc
+ - Proper Fillable Property Setup
  - Proper Eloquent Relationship defined
 
 ### Note
@@ -488,7 +489,10 @@ http://127.0.0.1:8800/api/profile?graph={name,email,phone,addresses{*}}
 http://127.0.0.1:8800/api/cart-item/list?graph={quantity,_timestamps,product{name,image},productVariation{*}}
 ```
 
-## Additional Methods 
+## Diagram Visual
+Visit `http://127.0.0.1:8800/graphsql/diagram` for visual diagram of your schema
+
+## Additional Methods
 
 GraphSql comes with few shorthands for traditional queries
 ```

@@ -71,7 +71,7 @@ trait QueryAssist
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
-                $dbQuery = $dbQuery->where($field, $query[$field]);
+                $dbQuery = $dbQuery->where($field, $this->parsePrimitiveValue($query[$field]));
             }
         }
 
@@ -88,7 +88,8 @@ trait QueryAssist
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
-                $dbQuery = $dbQuery->whereIn($field, explode(',', $query[$field]));
+                $value = is_string($query[$field]) ? $query[$field] : '';
+                $dbQuery = $dbQuery->whereIn($field, explode(',', $value));
             }
         }
 
@@ -105,11 +106,37 @@ trait QueryAssist
     {
         foreach ($columns as $field) {
             if(array_key_exists($field, $query)) {
-                $dbQuery = $dbQuery->whereNotIn($field, explode(',', $query[$field]));
+                $value = is_string($query[$field]) ? $query[$field] : '';
+                $dbQuery = $dbQuery->whereNotIn($field, explode(',', $value));
             }
         }
 
         return $dbQuery;
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    private function parsePrimitiveValue(mixed $value): mixed
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $trimmed = trim($value);
+
+        if ($trimmed === 'null') {
+            return null;
+        }
+        if ($trimmed === 'true') {
+            return true;
+        }
+        if ($trimmed === 'false') {
+            return false;
+        }
+
+        return $value;
     }
 
     /**

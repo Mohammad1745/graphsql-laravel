@@ -274,15 +274,16 @@ trait QueryAssist
 
         if (array_key_exists('nodes', $graph)) {
 
-            [$nodes, $counts, $sums] = $this->splitNodes($graph['nodes']);
+            [$nodes, $counts, $sums, $avgs, $maxs, $mins] = $this->splitNodes($graph['nodes']);
 
-
-            if (count($sums)) {
-                foreach ($sums as $sum) {
-                    if (!count($sum['fields'])) {
-                        throw new \Exception("Missing field name for 'sum'");
+            $aggregates = ['Sum' => $sums, 'Avg' => $avgs, 'Max' => $maxs, 'Min' => $mins];
+            foreach ($aggregates as $type => $data) {
+                foreach ($data as $item) {
+                    if (!count($item['fields'])) {
+                        throw new \Exception("Missing field name for '" . strtolower($type) . "'");
                     }
-                    $dbQuery = $dbQuery->withSum( $this->querySumNode($sum), $sum['fields'][0]);
+                    $method = "with{$type}";
+                    $dbQuery = $dbQuery->$method($this->queryAggregationNode($item), $item['fields'][0]);
                 }
             }
             if (count($counts)) {
@@ -330,14 +331,16 @@ trait QueryAssist
 
                 if (array_key_exists('nodes', $node)) {
 
-                    [$nodes, $counts, $sums] = $this->splitNodes($node['nodes']);
+                    [$nodes, $counts, $sums, $avgs, $maxs, $mins] = $this->splitNodes($node['nodes']);
 
-                    if (count($sums)) {
-                        foreach ($sums as $sum) {
-                            if (!count($sum['fields'])) {
-                                throw new \Exception("Missing field name for 'sum'");
+                    $aggregates = ['Sum' => $sums, 'Avg' => $avgs, 'Max' => $maxs, 'Min' => $mins];
+                    foreach ($aggregates as $type => $data) {
+                        foreach ($data as $item) {
+                            if (!count($item['fields'])) {
+                                throw new \Exception("Missing field name for '" . strtolower($type) . "'");
                             }
-                            $dbQuery = $dbQuery->withSum( $this->querySumNode($sum), $sum['fields'][0]);
+                            $method = "with{$type}";
+                            $dbQuery = $dbQuery->$method( $this->queryAggregationNode($item), $item['fields'][0]);
                         }
                     }
                     if (count($counts)) {
@@ -375,7 +378,7 @@ trait QueryAssist
      * @param array $node
      * @return array
      */
-    protected function querySumNode (array $node): array
+    protected function queryAggregationNode (array $node): array
     {
         return [
             $node["title"] => function ($dbQuery) use ($node) {
@@ -395,6 +398,9 @@ trait QueryAssist
         $nodes = [];
         $counts = [];
         $sums = [];
+        $avgs = [];
+        $maxs = [];
+        $mins = [];
         foreach ($allNodes as $node) {
             if ($node['type'] == 'subnode') {
                 $nodes [] = $node;
@@ -405,9 +411,18 @@ trait QueryAssist
             else if ($node['type'] == 'sum') {
                 $sums []= $node;
             }
+            else if ($node['type'] == 'avg') {
+                $avgs []= $node;
+            }
+            else if ($node['type'] == 'max') {
+                $maxs []= $node;
+            }
+            else if ($node['type'] == 'min') {
+                $mins []= $node;
+            }
         }
 
-        return [$nodes, $counts, $sums];
+        return [$nodes, $counts, $sums, $avgs, $maxs, $mins];
     }
 
     /**
@@ -517,8 +532,10 @@ trait QueryAssist
             $graph['length'] = $length;
 
             $graph['type'] = $this->parseNodeType($graphString);
-            if ($graph['type'] == 'sum') {
-                $graph['fields'] = [str_replace('sum.', '', $graphString)];
+            foreach (['sum', 'avg', 'max', 'min'] as $type) {
+                if ($graph['type'] == $type) {
+                    $graph['fields'] = [str_replace("$type.", '', $graphString)];
+                }
             }
         }
 
@@ -676,9 +693,10 @@ trait QueryAssist
             return "count";
         }
 
-        $hasSumStr = str_contains($graphString, 'sum.');
-        if ($hasSumStr) {
-            return "sum";
+        foreach (['sum', 'avg', 'max', 'min'] as $type) {
+            if (str_contains($graphString, "$type.")) {
+                return $type;
+            }
         }
 
         throw new \Exception("Invalid string '$graphString'");
